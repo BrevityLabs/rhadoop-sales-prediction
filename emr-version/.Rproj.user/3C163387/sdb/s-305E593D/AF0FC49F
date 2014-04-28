@@ -1,0 +1,16 @@
+{
+    "contents" : "-----------------------------------------------------------------------------------\nPreparation\n-----------------------------------------------------------------------------------\n1. Make sure all the files in S3 which need to be accessed during bootstrap or step processes are readable/downloadable by\n   \"everyone\"\n\n\n-----------------------------------------------------------------------------------\nYOSEF\n-----------------------------------------------------------------------------------\n//** Start the instance and bootstrap it **//\nruby elastic-mapreduce --create --alive --num-instances 6 --master-instance-type \"m3.medium\"  --name \"Install R 2.15.1 & RMR2.3.0\" --bootstrap-action \"s3://cust-behavior/bootstrap.sh\" --jar /home/hadoop/lib/emr-s3distcp-1.0.jar --args '--src,s3://cust-behavior/datafiles,--dest,hdfs:///home/hadoop/datafiles'\n\n//** log into the system and run the following bash commands **//\nwget -S -T 10 -t 5 http://cust-behavior.s3.amazonaws.com/MR_Main.R\nwget -S -T 10 -t 5 http://cust-behavior.s3.amazonaws.com/MR_Custom_Functions.R\n\n//** Run the program **//\nR CMD BATCH MR_Main.R\n\n//** Copy result back to S3 **//\nruby elastic-mapreduce  -j \"j-POPRVRKD8XYG\" --jar /home/hadoop/lib/emr-s3distcp-1.0.jar --args '--src,hdfs:///home/hadoop/output/deviants.csv/,--dest,s3://cust-behavior/output'\n\n\n-----------------------------------------------------------------------------------\nMUKUL\n-----------------------------------------------------------------------------------\n//** Bootstrap and RHadoop **//\nruby elastic-mapreduce --create --alive --num-instances 1 --master-instance-type \"m1.small\" --name \"Install R 2.15.1 & RMR2.3.0\" --bootstrap-action \"s3://mukul-biswas-bucket/bootstrap.sh\" --jar /home/hadoop/lib/emr-s3distcp-1.0.jar --args '--src,s3://mukul-biswas-bucket/datafiles,--dest,hdfs:///home/hadoop/datafiles'\n\n//** Copy result back to S3 **//\nruby elastic-mapreduce --name \"Transfer result to S3\" --jar /home/hadoop/lib/emr-s3distcp-1.0.jar --args '--src,hdfs:///hadoop/home/output,--dest,s3://mukul-biswas-bucket/output'\n\n//** log into the system and run the following bash commands **//\nwget -S -T 10 -t 5 http://mukul-biswas-bucket.s3.amazonaws.com/MR_Main.R\nwget -S -T 10 -t 5 http://mukul-biswas-bucket.s3.amazonaws.com/MR_Custom_Functions.R\n\n\n-----------------------------------------------------------------------------------\nIF NEED BE\n-----------------------------------------------------------------------------------\n\n//** Add more instances to the group **//\nelastic-mapreduce --modify-instance-group CORE --instance-count 40\n\n//** Add to the group **//\nelastic-mapreduce --add-instance-group TASK --instance-count 40 --instance-type c1.medium",
+    "created" : 1398684353963.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1029931397",
+    "id" : "AF0FC49F",
+    "lastKnownWriteTime" : 1398680818,
+    "path" : "~/GitHub/rhadoop-sales-prediction/emr-version/emr-commands.txt",
+    "project_path" : "emr-commands.txt",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "text"
+}
