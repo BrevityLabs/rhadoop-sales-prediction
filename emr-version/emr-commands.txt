@@ -1,47 +1,38 @@
------------------------------------------------------------------------------------
-Preparation
------------------------------------------------------------------------------------
-1. Make sure all the files in S3 which need to be accessed during bootstrap or step processes are readable/downloadable by
-   "everyone"
+## Treat bang as comment
+## -----------------------------------------------------------------------------------
+## Preparation
+## -----------------------------------------------------------------------------------
+## 1. Make sure all the files in S3 which need to be accessed during bootstrap or step processes
+##   are readable/downloadable by "everyone"
 
 
------------------------------------------------------------------------------------
-YOSEF
------------------------------------------------------------------------------------
-//** Start the instance and bootstrap it **//
-ruby elastic-mapreduce --create --alive --num-instances 6 --master-instance-type "m3.medium"  --name "Install R 2.15.1 & RMR2.3.0" --bootstrap-action "s3://cust-behavior/bootstrap.sh" --jar /home/hadoop/lib/emr-s3distcp-1.0.jar --args '--src,s3://cust-behavior/datafiles,--dest,hdfs:///home/hadoop/datafiles'
+##  Run this from the windows command prompt. Following action takes place
+##      Setup R and RHadoop (rmr2 with its dependencies). 
+##      Copy data files from S3 to EMR
 
-//** log into the system and run the following bash commands **//
-wget -S -T 10 -t 5 http://cust-behavior.s3.amazonaws.com/MR_Main.R
-wget -S -T 10 -t 5 http://cust-behavior.s3.amazonaws.com/MR_Custom_Functions.R
-
-//** Run the program **//
-R CMD BATCH MR_Main.R
-
-//** Copy result back to S3 **//
-ruby elastic-mapreduce  -j "j-POPRVRKD8XYG" --jar /home/hadoop/lib/emr-s3distcp-1.0.jar --args '--src,hdfs:///home/hadoop/output/deviants.csv/,--dest,s3://cust-behavior/output'
-
-
------------------------------------------------------------------------------------
-MUKUL
------------------------------------------------------------------------------------
-//** Bootstrap and RHadoop **//
 ruby elastic-mapreduce --create --alive --num-instances 1 --master-instance-type "m1.small" --name "Install R 2.15.1 & RMR2.3.0" --bootstrap-action "s3://mukul-biswas-bucket/bootstrap.sh" --jar /home/hadoop/lib/emr-s3distcp-1.0.jar --args '--src,s3://mukul-biswas-bucket/datafiles,--dest,hdfs:///home/hadoop/datafiles'
 
-//** Copy result back to S3 **//
-ruby elastic-mapreduce --name "Transfer result to S3" --jar /home/hadoop/lib/emr-s3distcp-1.0.jar --args '--src,hdfs:///hadoop/home/output,--dest,s3://mukul-biswas-bucket/output'
 
-//** log into the system and run the following bash commands **//
+## Log into the Master node using Putty.exe. Use the instance public IP and PPK file made from PEM file using Puttygen.exe
+## Login as "hadoop"" when prompted with "login as"
+## When logged in, perform these on the bash shell prompt
+##      Copy the R script files
+
 wget -S -T 10 -t 5 http://mukul-biswas-bucket.s3.amazonaws.com/MR_Main.R
 wget -S -T 10 -t 5 http://mukul-biswas-bucket.s3.amazonaws.com/MR_Custom_Functions.R
 
 
------------------------------------------------------------------------------------
-IF NEED BE
------------------------------------------------------------------------------------
+## Execute the program
 
-//** Add more instances to the group **//
-elastic-mapreduce --modify-instance-group CORE --instance-count 40
+R CMD BATCH MR_Main.R
 
-//** Add to the group **//
-elastic-mapreduce --add-instance-group TASK --instance-count 40 --instance-type c1.medium
+## OR
+
+./MR_Main.R
+
+## provided the shebang works well (have not seen working so far)
+
+## Once the program completes. Before terminating the instance transfer the result data from EMR to S3
+
+ruby elastic-mapreduce -j "<job ID>"  --jar /home/hadoop/lib/emr-s3distcp-1.0.jar --args '--src,hdfs:///hadoop/home/output,--dest,s3://mukul-biswas-bucket/output'
+
